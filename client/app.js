@@ -37,9 +37,27 @@
       return maxDiff();
     };
 
+    var optimum = getOptimum();
+    _.set(optimum, 'min.label', 'BUY: '+_.get(optimum, 'min.close'));
+    _.set(optimum, 'max.label', 'SELL: '+_.get(optimum, 'max.close'));
+
+    function getAmount(investment) {
+      return _.round(investment/optimum.min.close)
+    };
+
     return {
       data: data,
-      getOptimum: getOptimum
+      getOptimum: function() {
+        return optimum;
+      },
+      getAmount: getAmount,
+      getROI: function(investment) {
+        var amount = getAmount(investment);
+        return (amount*(optimum.max.close-optimum.min.close))/(amount*optimum.min.close) * 100;
+      },
+      getCash: function(investment) {
+        return getAmount(investment)*optimum.max.close;
+      }
     };
   };
 
@@ -47,7 +65,10 @@
 
   Graphics.stock = function plot(anchor, stock){
     //console.log(info);
-
+    var markers = [];
+    var optimum = stock.getOptimum();
+    if(_.has(optimum, 'min')) markers.push(optimum.min);
+    if(_.has(optimum, 'max')) markers.push(optimum.max);
 
     MG.data_graphic({
       title: 'Facebook',
@@ -55,7 +76,8 @@
       full_width: true,
       target: anchor,
       x_accessor: 'date',
-      y_accessor: 'close'
+      y_accessor: 'close',
+      markers: markers
     });
   };
 
@@ -94,21 +116,49 @@
   app.directive('test', function(Quandl){
     return {
       restrict: 'E',
-      template: '<div id="stock" style="width: 100%; height-min: 100px;"></div>',
+      templateUrl: '/client/stock.tpl.html',
       scope: { name: "=" },
-      controller: function($scope, $element){
+      controller: function($scope, $element) {
+        var stock;
+        $scope.companies = ['FB', 'GOOG'];
+        $scope.company = _.first($scope.companies);
+        $scope.optimum;
+        $scope.investment = 1000;
 
-        Quandl.get('fb')
-        .then(function(response) {
-          var stock = Stock(response);
-          console.log(stock.getOptimum());
-          Graphics.stock($element.find('#stock')[0], stock);
-          $scope.$apply();
-        })
-        .catch(function(err) {
-          console.log(err);
-        });
 
+        $scope.getROI = function() {
+          if(stock) {
+            return stock.getROI($scope.investment);
+          }
+        };
+
+        $scope.cash = function() {
+          if(stock) {
+            return stock.getCash($scope.investment);
+          }
+        };
+
+        $scope.amount = function() {
+          if(stock) {
+            return stock.getAmount($scope.investment);
+          }
+        };
+
+        $scope.update = function() {
+          Quandl.get($scope.company)
+          .then(function(response) {
+            //console.log(response);
+            stock = Stock(response);
+            Graphics.stock($element.find('#stock')[0], stock);
+            $scope.optimum = stock.getOptimum();
+            $scope.$apply();
+          })
+          .catch(function(err) {
+            console.log(err);
+          });
+        }
+
+        $scope.update();
       }
     };
   });

@@ -1,0 +1,21 @@
+<div id="stock" style="width: 100%; height-min: 100px;"></div>
+<md-input-container class="md-block" flex-gt-sm>
+  <label>Company</label>
+  <md-select ng-model="company">
+    <md-option ng-repeat="option in companies" value="{{ option }}">
+      {{ option }}
+    </md-option>
+  </md-select>
+</md-input-container>
+<md-input-container class="md-block" flex-gt-sm>
+  <label>Investment</label>
+  <input type="number" ng-model="investment">
+</md-input-container>
+
+<section layout="row" layout-sm="column" layout-align="center center" layout-wrap>
+  <div flex>{{ amount() | number:0 }} Aktien</div>
+  <div flex>{{ cash() | number:2 }} $</div>
+  <div flex>ROI: {{ getROI() | number:2 }} %</div>
+</section>
+
+<!--<pre>{{ optimum | json }}</pre>-->
