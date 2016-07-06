@@ -57,6 +57,9 @@
       },
       getCash: function(investment) {
         return getAmount(investment)*optimum.max.close;
+      },
+      getName: function() {
+        return _.get(info, 'dataset.name');
       }
     };
   };
@@ -71,7 +74,7 @@
     if(_.has(optimum, 'max')) markers.push(optimum.max);
 
     MG.data_graphic({
-      title: 'Facebook',
+      //title: stock.getName(),
       data: stock.data,
       full_width: true,
       target: anchor,
@@ -102,6 +105,7 @@
 
   app.factory('Quandl', function(Request) {
     var createWikiUrl = _.template('https://www.quandl.com/api/v3/datasets/WIKI/${ name }.json');
+    //var createWikiUrl = _.template('/${ name }');
 
     function get(name) {
       var url = createWikiUrl({ name: _.toUpper(name) });
@@ -144,10 +148,16 @@
           }
         };
 
+        $scope.getName = function() {
+          if(stock) {
+            return stock.getName();
+          }
+        };
+
         $scope.update = function() {
           Quandl.get($scope.company)
           .then(function(response) {
-            //console.log(response);
+            console.log(response);
             stock = Stock(response);
             Graphics.stock($element.find('#stock')[0], stock);
             $scope.optimum = stock.getOptimum();
